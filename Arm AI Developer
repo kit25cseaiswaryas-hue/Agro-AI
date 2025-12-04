@@ -1,0 +1,667 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgroRoot AI</title>
+  <script src="/_sdk/data_sdk.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      height: 100%;
+      width: 100%;
+    }
+
+    .app-wrapper {
+      width: 100%;
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      padding: 24px;
+      text-align: center;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .logo-icon {
+      font-size: 36px;
+    }
+
+    .app-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .subtitle {
+      font-size: 16px;
+      margin: 4px 0 0 0;
+      opacity: 0.7;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 24px;
+      max-width: 800px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    .scan-section {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .camera-preview {
+      width: 100%;
+      max-width: 400px;
+      height: 300px;
+      margin: 0 auto 24px;
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 3px dashed #d1d5db;
+    }
+
+    .camera-preview video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .placeholder-icon {
+      font-size: 80px;
+      opacity: 0.3;
+    }
+
+    .scan-button {
+      padding: 16px 48px;
+      font-size: 18px;
+      font-weight: 600;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin: 8px;
+    }
+
+    .scan-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .analysis-result {
+      padding: 24px;
+      border-radius: 16px;
+      margin-bottom: 24px;
+      display: none;
+    }
+
+    .analysis-result.show {
+      display: block;
+    }
+
+    .health-status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .status-icon {
+      font-size: 32px;
+    }
+
+    .confidence-bar {
+      height: 8px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+
+    .confidence-fill {
+      height: 100%;
+      transition: width 0.5s ease;
+      border-radius: 4px;
+    }
+
+    .confidence-text {
+      font-size: 14px;
+      opacity: 0.7;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin: 24px 0 12px 0;
+    }
+
+    .issues-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .issues-list li {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: start;
+      gap: 8px;
+    }
+
+    .recommendations-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .recommendations-list li {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: start;
+      gap: 8px;
+    }
+
+    .history-section {
+      margin-top: 32px;
+    }
+
+    .history-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .history-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 16px;
+    }
+
+    .history-card {
+      padding: 16px;
+      border-radius: 12px;
+      border: 2px solid #e5e7eb;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .history-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .history-date {
+      font-size: 12px;
+      opacity: 0.6;
+      margin-bottom: 8px;
+    }
+
+    .history-plant {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .history-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+    }
+
+    .loading-spinner {
+      display: none;
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f4f6;
+      border-top: 4px solid #10b981;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    .loading-spinner.show {
+      display: block;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .offline-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 8px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      opacity: 0.5;
+    }
+
+    .empty-state-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 600px) {
+      .main-content {
+        padding: 16px;
+      }
+
+      .header {
+        padding: 16px;
+      }
+
+      .app-title {
+        font-size: 24px;
+      }
+
+      .camera-preview {
+        height: 250px;
+      }
+
+      .history-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <div class="app-wrapper">
+   <header class="header">
+    <div class="logo"><span class="logo-icon">🌱</span>
+     <h1 class="app-title" id="appTitle">AgroRoot AI</h1>
+    </div>
+    <p class="subtitle" id="welcomeMessage">Your Offline Plant Health Assistant</p>
+    <div class="offline-badge"><span>📡</span> <span>Works Offline</span>
+    </div>
+   </header>
+   <main class="main-content">
+    <section class="scan-section">
+     <div class="camera-preview" id="cameraPreview"><span class="placeholder-icon">📷</span>
+     </div><button class="scan-button" id="scanButton"> <span id="scanButtonText">Analyze Plant</span> </button>
+     <div class="loading-spinner" id="loadingSpinner"></div>
+    </section>
+    <section class="analysis-result" id="analysisResult">
+     <div class="health-status" id="healthStatus"><span class="status-icon">✅</span> <span id="statusText">Healthy</span>
+     </div>
+     <div class="confidence-bar">
+      <div class="confidence-fill" id="confidenceFill"></div>
+     </div>
+     <p class="confidence-text" id="confidenceText">Confidence: 0%</p>
+     <h3 class="section-title">🔍 Issues Detected</h3>
+     <ul class="issues-list" id="issuesList"></ul>
+     <h3 class="section-title">💡 Recommendations</h3>
+     <ul class="recommendations-list" id="recommendationsList"></ul><button class="scan-button" id="saveButton" style="margin-top: 16px;"> Save Analysis </button>
+    </section>
+    <section class="history-section">
+     <h2 class="history-title">📊 Analysis History</h2>
+     <div class="history-grid" id="historyGrid">
+      <div class="empty-state">
+       <div class="empty-state-icon">
+        🌾
+       </div>
+       <p>No analyses yet. Start by scanning your first plant!</p>
+      </div>
+     </div>
+    </section>
+   </main>
+  </div>
+  <script>
+    const defaultConfig = {
+      app_title: "AgroRoot AI",
+      welcome_message: "Your Offline Plant Health Assistant",
+      scan_button_text: "Analyze Plant",
+      background_color: "#f0fdf4",
+      surface_color: "#ffffff",
+      text_color: "#1f2937",
+      primary_action_color: "#10b981",
+      secondary_action_color: "#6b7280",
+      font_family: "system-ui",
+      font_size: 16
+    };
+
+    let currentAnalysis = null;
+    let analysisHistory = [];
+
+    const plantScenarios = [
+      {
+        plant_type: "Tomato",
+        health_status: "Healthy",
+        confidence: 92,
+        issues: ["None detected"],
+        recommendations: ["Continue current care routine", "Monitor for early signs of pests", "Ensure adequate sunlight (6-8 hours daily)"]
+      },
+      {
+        plant_type: "Wheat",
+        health_status: "Moderate Issues",
+        confidence: 85,
+        issues: ["Slight yellowing on lower leaves", "Minor nutrient deficiency detected"],
+        recommendations: ["Apply nitrogen-rich fertilizer", "Check soil pH levels", "Increase watering frequency", "Remove affected leaves"]
+      },
+      {
+        plant_type: "Rice",
+        health_status: "Critical",
+        confidence: 88,
+        issues: ["Brown spot disease detected", "Fungal infection present", "Leaf discoloration"],
+        recommendations: ["Apply fungicide immediately", "Improve drainage to reduce moisture", "Remove severely infected plants", "Spray copper-based treatment", "Consult agricultural extension officer"]
+      },
+      {
+        plant_type: "Corn",
+        health_status: "Healthy",
+        confidence: 95,
+        issues: ["None detected"],
+        recommendations: ["Maintain current irrigation schedule", "Watch for corn borers in next 2 weeks", "Apply side-dressing fertilizer soon"]
+      },
+      {
+        plant_type: "Cotton",
+        health_status: "Moderate Issues",
+        confidence: 78,
+        issues: ["Early signs of whitefly infestation", "Leaf curling observed"],
+        recommendations: ["Apply neem-based organic pesticide", "Introduce beneficial insects", "Increase monitoring frequency", "Remove affected leaves"]
+      }
+    ];
+
+    function simulateAIAnalysis() {
+      return plantScenarios[Math.floor(Math.random() * plantScenarios.length)];
+    }
+
+    function onConfigChange(config) {
+      const baseSize = config.font_size || defaultConfig.font_size;
+      const customFont = config.font_family || defaultConfig.font_family;
+      const baseFontStack = 'system-ui, -apple-system, sans-serif';
+      
+      document.getElementById('appTitle').textContent = config.app_title || defaultConfig.app_title;
+      document.getElementById('welcomeMessage').textContent = config.welcome_message || defaultConfig.welcome_message;
+      document.getElementById('scanButtonText').textContent = config.scan_button_text || defaultConfig.scan_button_text;
+
+      document.body.style.fontFamily = `${customFont}, ${baseFontStack}`;
+      document.body.style.fontSize = `${baseSize}px`;
+
+      document.querySelector('.app-title').style.fontSize = `${baseSize * 1.75}px`;
+      document.querySelector('.subtitle').style.fontSize = `${baseSize}px`;
+      document.querySelector('.health-status').style.fontSize = `${baseSize * 1.5}px`;
+      document.querySelector('.section-title').style.fontSize = `${baseSize * 1.125}px`;
+      document.querySelector('.history-title').style.fontSize = `${baseSize * 1.375}px`;
+
+      const bgColor = config.background_color || defaultConfig.background_color;
+      const surfaceColor = config.surface_color || defaultConfig.surface_color;
+      const textColor = config.text_color || defaultConfig.text_color;
+      const primaryColor = config.primary_action_color || defaultConfig.primary_action_color;
+      const secondaryColor = config.secondary_action_color || defaultConfig.secondary_action_color;
+
+      document.querySelector('.app-wrapper').style.background = bgColor;
+      document.querySelector('.header').style.background = surfaceColor;
+      document.querySelector('.header').style.color = textColor;
+      document.body.style.color = textColor;
+
+      document.querySelectorAll('.scan-button').forEach(btn => {
+        btn.style.background = primaryColor;
+        btn.style.color = surfaceColor;
+      });
+
+      document.querySelector('.offline-badge').style.background = secondaryColor;
+      document.querySelector('.offline-badge').style.color = surfaceColor;
+
+      document.querySelector('#analysisResult').style.background = surfaceColor;
+      document.querySelector('#analysisResult').style.color = textColor;
+
+      document.querySelectorAll('.history-card').forEach(card => {
+        card.style.background = surfaceColor;
+        card.style.borderColor = secondaryColor;
+      });
+
+      document.querySelectorAll('.issues-list li').forEach(li => {
+        li.style.background = bgColor;
+      });
+
+      document.querySelectorAll('.recommendations-list li').forEach(li => {
+        li.style.background = bgColor;
+      });
+
+      document.querySelector('.confidence-bar').style.background = `${secondaryColor}33`;
+      document.querySelector('.confidence-fill').style.background = primaryColor;
+    }
+
+    async function performAnalysis() {
+      const scanButton = document.getElementById('scanButton');
+      const loadingSpinner = document.getElementById('loadingSpinner');
+      const analysisResult = document.getElementById('analysisResult');
+
+      scanButton.disabled = true;
+      loadingSpinner.classList.add('show');
+      analysisResult.classList.remove('show');
+
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      const analysis = simulateAIAnalysis();
+      currentAnalysis = analysis;
+
+      document.getElementById('statusText').textContent = analysis.health_status;
+      document.getElementById('confidenceText').textContent = `Confidence: ${analysis.confidence}%`;
+      document.getElementById('confidenceFill').style.width = `${analysis.confidence}%`;
+
+      const statusIcon = document.querySelector('.status-icon');
+      if (analysis.health_status === "Healthy") {
+        statusIcon.textContent = "✅";
+      } else if (analysis.health_status === "Moderate Issues") {
+        statusIcon.textContent = "⚠️";
+      } else {
+        statusIcon.textContent = "❌";
+      }
+
+      const issuesList = document.getElementById('issuesList');
+      issuesList.innerHTML = '';
+      analysis.issues.forEach(issue => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span>🔸</span><span>${issue}</span>`;
+        issuesList.appendChild(li);
+      });
+
+      const recommendationsList = document.getElementById('recommendationsList');
+      recommendationsList.innerHTML = '';
+      analysis.recommendations.forEach(rec => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span>💡</span><span>${rec}</span>`;
+        recommendationsList.appendChild(li);
+      });
+
+      loadingSpinner.classList.remove('show');
+      analysisResult.classList.add('show');
+      scanButton.disabled = false;
+    }
+
+    async function saveAnalysis() {
+      if (!currentAnalysis) return;
+
+      const saveButton = document.getElementById('saveButton');
+      saveButton.disabled = true;
+      saveButton.textContent = 'Saving...';
+
+      const record = {
+        id: `analysis_${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        plant_type: currentAnalysis.plant_type,
+        health_status: currentAnalysis.health_status,
+        confidence: currentAnalysis.confidence,
+        issues_detected: currentAnalysis.issues.join('; '),
+        recommendations: currentAnalysis.recommendations.join('; '),
+        image_data: "simulated_image_data"
+      };
+
+      const result = await window.dataSdk.create(record);
+
+      if (result.isOk) {
+        saveButton.textContent = '✓ Saved!';
+        setTimeout(() => {
+          saveButton.textContent = 'Save Analysis';
+          saveButton.disabled = false;
+        }, 2000);
+      } else {
+        saveButton.textContent = 'Error - Try Again';
+        saveButton.disabled = false;
+      }
+    }
+
+    function renderHistory(data) {
+      const historyGrid = document.getElementById('historyGrid');
+      
+      if (data.length === 0) {
+        historyGrid.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🌾</div>
+            <p>No analyses yet. Start by scanning your first plant!</p>
+          </div>
+        `;
+        return;
+      }
+
+      historyGrid.innerHTML = '';
+      
+      const sortedData = [...data].sort((a, b) => 
+        new Date(b.timestamp) - new Date(a.timestamp)
+      );
+
+      sortedData.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'history-card';
+        
+        const date = new Date(item.timestamp);
+        const formattedDate = date.toLocaleDateString('en-US', { 
+          month: 'short', 
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+
+        let statusIcon = '✅';
+        if (item.health_status === 'Moderate Issues') statusIcon = '⚠️';
+        if (item.health_status === 'Critical') statusIcon = '❌';
+
+        card.innerHTML = `
+          <div class="history-date">${formattedDate}</div>
+          <div class="history-plant">${item.plant_type}</div>
+          <div class="history-status">
+            <span>${statusIcon}</span>
+            <span>${item.health_status}</span>
+          </div>
+        `;
+
+        historyGrid.appendChild(card);
+      });
+
+      onConfigChange(window.elementSdk ? window.elementSdk.config : defaultConfig);
+    }
+
+    const dataHandler = {
+      onDataChanged(data) {
+        analysisHistory = data;
+        renderHistory(data);
+      }
+    };
+
+    document.getElementById('scanButton').addEventListener('click', performAnalysis);
+    document.getElementById('saveButton').addEventListener('click', saveAnalysis);
+
+    async function init() {
+      if (window.dataSdk) {
+        const initResult = await window.dataSdk.init(dataHandler);
+        if (!initResult.isOk) {
+          console.error("Failed to initialize data SDK");
+        }
+      }
+
+      if (window.elementSdk) {
+        window.elementSdk.init({
+          defaultConfig,
+          onConfigChange,
+          mapToCapabilities: (config) => ({
+            recolorables: [
+              {
+                get: () => config.background_color || defaultConfig.background_color,
+                set: (value) => {
+                  config.background_color = value;
+                  window.elementSdk.setConfig({ background_color: value });
+                }
+              },
+              {
+                get: () => config.surface_color || defaultConfig.surface_color,
+                set: (value) => {
+                  config.surface_color = value;
+                  window.elementSdk.setConfig({ surface_color: value });
+                }
+              },
+              {
+                get: () => config.text_color || defaultConfig.text_color,
+                set: (value) => {
+                  config.text_color = value;
+                  window.elementSdk.setConfig({ text_color: value });
+                }
+              },
+              {
+                get: () => config.primary_action_color || defaultConfig.primary_action_color,
+                set: (value) => {
+                  config.primary_action_color = value;
+                  window.elementSdk.setConfig({ primary_action_color: value });
+                }
+              },
+              {
+                get: () => config.secondary_action_color || defaultConfig.secondary_action_color,
+                set: (value) => {
+                  config.secondary_action_color = value;
+                  window.elementSdk.setConfig({ secondary_action_color: value });
+                }
+              }
+            ],
+            borderables: [],
+            fontEditable: {
+              get: () => config.font_family || defaultConfig.font_family,
+              set: (value) => {
+                config.font_family = value;
+                window.elementSdk.setConfig({ font_family: value });
+              }
+            },
+            fontSizeable: {
+              get: () => config.font_size || defaultConfig.font_size,
+              set: (value) => {
+                config.font_size = value;
+                window.elementSdk.setConfig({ font_size: value });
+              }
+            }
+          }),
+          mapToEditPanelValues: (config) => new Map([
+            ["app_title", config.app_title || defaultConfig.app_title],
+            ["welcome_message", config.welcome_message || defaultConfig.welcome_me
